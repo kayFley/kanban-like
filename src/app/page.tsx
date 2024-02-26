@@ -5,7 +5,23 @@ import { motion } from 'framer-motion'
 import { FaFire } from 'react-icons/fa'
 import { FiPlus, FiTrash } from 'react-icons/fi'
 
-export default function NotionKanban() {
+interface Card {
+	id: string
+	title: string
+	column: string
+}
+
+interface Props {
+	title: string
+	id: string
+	column: string
+	handleDragStart: (
+		event: React.DragEvent,
+		data: { title: string; id: string; column: string },
+	) => void
+}
+
+export default function NotionKanban(): JSX.Element {
 	return (
 		<div className='h-screen w-full bg-neutral-900 text-neutral-50'>
 			<Board />
@@ -13,8 +29,8 @@ export default function NotionKanban() {
 	)
 }
 
-const Board = () => {
-	const [cards, setCards] = useState([])
+const Board = (): JSX.Element => {
+	const [cards, setCards] = useState<Card[]>([])
 	const [hasChecked, setHasChecked] = useState(false)
 
 	useEffect(() => {
@@ -23,9 +39,7 @@ const Board = () => {
 
 	useEffect(() => {
 		const cardData = localStorage.getItem('cards')
-
 		setCards(cardData ? JSON.parse(cardData) : [])
-
 		setHasChecked(true)
 	}, [])
 
@@ -63,16 +77,27 @@ const Board = () => {
 		</div>
 	)
 }
-
-const Column = ({ title, headingColor, column, cards, setCards }) => {
+const Column = ({
+	title,
+	headingColor,
+	column,
+	cards,
+	setCards,
+}: {
+	title: string
+	headingColor: string
+	column: string
+	cards: Card[]
+	setCards: React.Dispatch<React.SetStateAction<Card[]>>
+}): JSX.Element => {
 	const [active, setActive] = useState(false)
 
-	const handleDragStart = (e, card) => {
+	const handleDragStart = (e: React.DragEvent, card: Card): void => {
 		e.dataTransfer.setData('cardId', card.id)
 	}
 
-	const handleDragEnd = e => {
-		const cardId = e.dataTransfer.getData('cardId')
+	const handleDragEnd = (e: React.DragEvent): void => {
+		const cardId: string = e.dataTransfer.getData('cardId')
 
 		setActive(false)
 		clearHighlights()
@@ -106,22 +131,21 @@ const Column = ({ title, headingColor, column, cards, setCards }) => {
 		}
 	}
 
-	const handleDragOver = e => {
+	const handleDragOver = (e: React.DragEvent): void => {
 		e.preventDefault()
 		highlightIndicator(e)
-
 		setActive(true)
 	}
 
-	const clearHighlights = els => {
-		const indicators = els || getIndicators()
+	const clearHighlights = (els?: HTMLElement[] | null): void => {
+		const indicators = els ?? getIndicators()
 
 		indicators.forEach(i => {
 			i.style.opacity = '0'
 		})
 	}
 
-	const highlightIndicator = e => {
+	const highlightIndicator = (e: React.MouseEvent): void => {
 		const indicators = getIndicators()
 
 		clearHighlights(indicators)
@@ -131,7 +155,7 @@ const Column = ({ title, headingColor, column, cards, setCards }) => {
 		el.element.style.opacity = '1'
 	}
 
-	const getNearestIndicator = (e, indicators) => {
+	const getNearestIndicator = (e: React.MouseEvent, indicators) => {
 		const DISTANCE_OFFSET = 50
 
 		const el = indicators.reduce(
@@ -191,7 +215,7 @@ const Column = ({ title, headingColor, column, cards, setCards }) => {
 	)
 }
 
-const Card = ({ title, id, column, handleDragStart }) => {
+const Card = ({ title, id, column, handleDragStart }: Props): JSX.Element => {
 	return (
 		<>
 			<DropIndicator beforeId={id} column={column} />
@@ -199,8 +223,10 @@ const Card = ({ title, id, column, handleDragStart }) => {
 				layout
 				layoutId={id}
 				draggable='true'
-				onDragStart={e => handleDragStart(e, { title, id, column })}
-				className='cursor-grap rounded border border-neutral-700 bg-neutral-800 p-3 active:cursor-grabbing'
+				onDragStart={(e: React.DragEvent) =>
+					handleDragStart(e, { title, id, column })
+				}
+				className='cursor-grab rounded border border-neutral-700 bg-neutral-800 p-3 active:cursor-grabbing'
 			>
 				<p className='text-sm text-neutral-100'>{title}</p>
 			</motion.div>
@@ -208,20 +234,30 @@ const Card = ({ title, id, column, handleDragStart }) => {
 	)
 }
 
-const DropIndicator = ({ beforeId, column }) => {
+const DropIndicator = ({
+	beforeId,
+	column,
+}: {
+	beforeId: string | undefined
+	column: string
+}): JSX.Element => {
 	return (
 		<div
-			data-before={beforeId || '-1'}
+			data-before={beforeId ?? '-1'}
 			data-column={column}
 			className='my-0.5 h-0.5 w-full bg-violet-400 opacity-0'
 		/>
 	)
 }
 
-const BurnBarrel = ({ setCards }) => {
+const BurnBarrel = ({
+	setCards,
+}: {
+	setCards: React.Dispatch<React.SetStateAction<Card[]>>
+}): JSX.Element => {
 	const [active, setActive] = useState(false)
 
-	const handleDragOver = e => {
+	const handleDragOver = (e: React.DragEvent): void => {
 		e.preventDefault()
 		setActive(true)
 	}
@@ -230,10 +266,10 @@ const BurnBarrel = ({ setCards }) => {
 		setActive(false)
 	}
 
-	const handleDragEnd = e => {
-		const cardId = e.dataTransfer.getData('cardId')
+	const handleDragEnd = (e: React.DragEvent): void => {
+		const cardId: string = e.dataTransfer.getData('cardId')
 
-		setCards(pv => pv.filter(c => c.id !== cardId))
+		setCards(prevCards => prevCards.filter(c => c.id !== cardId))
 
 		setActive(false)
 	}
@@ -255,23 +291,30 @@ const BurnBarrel = ({ setCards }) => {
 	)
 }
 
-const AddCard = ({ column, setCards }) => {
+const AddCard = ({
+	column,
+	setCards,
+}: {
+	column: string
+	setCards: React.Dispatch<React.SetStateAction<Card[]>>
+}): JSX.Element => {
 	const [text, setText] = useState('')
 	const [adding, setAdding] = useState(false)
 
-	const handleSubmit = e => {
+	const handleSubmit = async (
+		e: React.FormEvent<HTMLFormElement>,
+	): Promise<void> => {
 		e.preventDefault()
 
-		if (!text.trim().length) return
+		if (!text.trim()) return
 
-		const newCard = {
+		const newCard: Card = {
 			column,
 			title: text.trim(),
 			id: Math.random().toString(),
 		}
 
-		setCards(pv => [...pv, newCard])
-
+		setCards(prevCards => [...prevCards, newCard])
 		setAdding(false)
 	}
 
@@ -318,61 +361,61 @@ const AddCard = ({ column, setCards }) => {
 	)
 }
 
-const DEFAULT_CARDS = [
-	// BACKLOG
-	{
-		title: 'Improve accessibility features on website',
-		id: '1',
-		column: 'backlog',
-	},
-	{
-		title: 'Implement new payment gateway integration',
-		id: '2',
-		column: 'backlog',
-	},
-	{
-		title: 'Optimize database queries for faster performance',
-		id: '3',
-		column: 'backlog',
-	},
-	{
-		title: 'Design user-friendly onboarding process',
-		id: '4',
-		column: 'backlog',
-	},
-	// TODO
-	{
-		title: 'Evaluate cloud providers for scalability',
-		id: '5',
-		column: 'todo',
-	},
-	{
-		title: 'Implement CI/CD pipeline for new service',
-		id: '6',
-		column: 'todo',
-	},
-	{
-		title: 'Conduct security audit for infrastructure',
-		id: '7',
-		column: 'todo',
-	},
-
-	// DOING
-	{
-		title: 'Refactor context providers to use Zustand',
-		id: '8',
-		column: 'doing',
-	},
-	{
-		title:
-			'Implement state management using Zustand in existing Context Providers"',
-		id: '9',
-		column: 'doing',
-	},
-	// DONE
-	{
-		title: 'Set up DD dashboards',
-		id: '10',
-		column: 'done',
-	},
-]
+// const DEFAULT_CARDS = [
+// 	// BACKLOG
+// 	{
+// 		title: 'Improve accessibility features on website',
+// 		id: '1',
+// 		column: 'backlog',
+// 	},
+// 	{
+// 		title: 'Implement new payment gateway integration',
+// 		id: '2',
+// 		column: 'backlog',
+// 	},
+// 	{
+// 		title: 'Optimize database queries for faster performance',
+// 		id: '3',
+// 		column: 'backlog',
+// 	},
+// 	{
+// 		title: 'Design user-friendly onboarding process',
+// 		id: '4',
+// 		column: 'backlog',
+// 	},
+// 	// TODO
+// 	{
+// 		title: 'Evaluate cloud providers for scalability',
+// 		id: '5',
+// 		column: 'todo',
+// 	},
+// 	{
+// 		title: 'Implement CI/CD pipeline for new service',
+// 		id: '6',
+// 		column: 'todo',
+// 	},
+// 	{
+// 		title: 'Conduct security audit for infrastructure',
+// 		id: '7',
+// 		column: 'todo',
+// 	},
+//
+// 	// DOING
+// 	{
+// 		title: 'Refactor context providers to use Zustand',
+// 		id: '8',
+// 		column: 'doing',
+// 	},
+// 	{
+// 		title:
+// 			'Implement state management using Zustand in existing Context Providers"',
+// 		id: '9',
+// 		column: 'doing',
+// 	},
+// 	// DONE
+// 	{
+// 		title: 'Set up DD dashboards',
+// 		id: '10',
+// 		column: 'done',
+// 	},
+// ]
