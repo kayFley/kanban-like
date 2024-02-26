@@ -8,7 +8,6 @@ export default function NotionKanban() {
 	return (
 		<div className='h-screen w-full bg-neutral-900 text-neutral-50'>
 			<Board />
-			{/*<Column />*/}
 		</div>
 	)
 }
@@ -18,36 +17,34 @@ const Board = () => {
 
 	return (
 		<div className='flex h-full w-full gap-3 overflow-scroll p-12'>
-			<div className='flex h-full w-full gap-3 overflow-scroll p-12'>
-				<Column
-					title='Backlog'
-					column='backlog'
-					headingColor='text-neutral-500'
-					cards={cards}
-					setCards={setCards}
-				/>
-				<Column
-					title='TODO'
-					column='todo'
-					headingColor='text-yellow-200'
-					cards={cards}
-					setCards={setCards}
-				/>
-				<Column
-					title='In progress'
-					column='doing'
-					headingColor='text-blue-200'
-					cards={cards}
-					setCards={setCards}
-				/>
-				<Column
-					title='Complete'
-					column='done'
-					headingColor='text-emerald-200'
-					cards={cards}
-					setCards={setCards}
-				/>
-			</div>
+			<Column
+				title='Backlog'
+				column='backlog'
+				headingColor='text-neutral-500'
+				cards={cards}
+				setCards={setCards}
+			/>
+			<Column
+				title='TODO'
+				column='todo'
+				headingColor='text-yellow-200'
+				cards={cards}
+				setCards={setCards}
+			/>
+			<Column
+				title='In progress'
+				column='doing'
+				headingColor='text-blue-200'
+				cards={cards}
+				setCards={setCards}
+			/>
+			<Column
+				title='Complete'
+				column='done'
+				headingColor='text-emerald-200'
+				cards={cards}
+				setCards={setCards}
+			/>
 			<BurnBarrel setCards={setCards} />
 		</div>
 	)
@@ -55,6 +52,10 @@ const Board = () => {
 
 const Column = ({ title, headingColor, column, cards, setCards }) => {
 	const [active, setActive] = useState(false)
+
+	const handleDragStart = (e, card) => {
+		e.dataTransfer.setData('cardId', card.id)
+	}
 
 	const filteredCards = cards.filter(c => c.column === column)
 
@@ -71,7 +72,7 @@ const Column = ({ title, headingColor, column, cards, setCards }) => {
 				${active ? 'bg-neutral-800/50' : 'bg-neutral-800/0'}`}
 			>
 				{filteredCards.map(c => {
-					return <Card key={c.id} {...c} />
+					return <Card key={c.id} {...c} handleDragStart={handleDragStart} />
 				})}
 				<DropIndicator beforeId='-1' column={column} />
 				<AddCard column={column} setCards={setCards} />
@@ -80,12 +81,13 @@ const Column = ({ title, headingColor, column, cards, setCards }) => {
 	)
 }
 
-const Card = ({ title, id, column }) => {
+const Card = ({ title, id, column, handleDragStart }) => {
 	return (
 		<>
 			<DropIndicator beforeId={id} column={column} />
 			<div
 				draggable='true'
+				onDragStart={e => handleDragStart(e, { title, id, column })}
 				className='cursor-grap rounded border border-neutral-700 bg-neutral-800 p-3 active:cursor-grabbing'
 			>
 				<p className='text-sm text-neutral-100'>{title}</p>
@@ -107,8 +109,28 @@ const DropIndicator = ({ beforeId, column }) => {
 const BurnBarrel = ({ setCards }) => {
 	const [active, setActive] = useState(false)
 
+	const handleDragOver = e => {
+		e.preventDefault()
+		setActive(true)
+	}
+
+	const handleDragLeave = () => {
+		setActive(false)
+	}
+
+	const handleDragEnd = e => {
+		const cardId = e.dataTransfer.getData('cardId')
+
+		setCards(pv => pv.filter(c => c.id !== cardId))
+
+		setActive(false)
+	}
+
 	return (
 		<div
+			onDrop={handleDragEnd}
+			onDragOver={handleDragOver}
+			onDragLeave={handleDragLeave}
 			className={`mt-10 grid h-56 w-56 shrink-0 place-content-center rounded border text-3xl 
 			${
 				active
@@ -161,7 +183,7 @@ const AddCard = ({ column, setCards }) => {
 						</button>
 						<button
 							type='submit'
-							className='flex items-center gap-1.5 rounded bg-neutral-50 px-3 py-1.5 
+							className='flex items-center gap-1.5 rounded bg-neutral-50 px-3 py-1.5
 										text-xs text-neutral-950 transition-colors hover:bg-neutral-300'
 						>
 							<span>Add</span>
