@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { FaFire } from 'react-icons/fa'
 import { FiPlus, FiTrash } from 'react-icons/fi'
@@ -14,7 +14,20 @@ export default function NotionKanban() {
 }
 
 const Board = () => {
-	const [cards, setCards] = useState(DEFAULT_CARDS)
+	const [cards, setCards] = useState([])
+	const [hasChecked, setHasChecked] = useState(false)
+
+	useEffect(() => {
+		hasChecked && localStorage.setItem('cards', JSON.stringify(cards))
+	}, [cards])
+
+	useEffect(() => {
+		const cardData = localStorage.getItem('cards')
+
+		setCards(cardData ? JSON.parse(cardData) : [])
+
+		setHasChecked(true)
+	}, [])
 
 	return (
 		<div className='flex h-full w-full gap-3 overflow-scroll p-12'>
