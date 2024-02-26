@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { FaFire } from 'react-icons/fa'
-import { FiTrash } from 'react-icons/fi'
+import { FiPlus, FiTrash } from 'react-icons/fi'
 
 export default function NotionKanban() {
 	return (
@@ -67,12 +67,14 @@ const Column = ({ title, headingColor, column, cards, setCards }) => {
 				</span>
 			</div>
 			<div
-				className={`h-full w-full transition-colors ${active ? 'bg-neutral-800/50' : 'bg-neutral-800/0'}`}
+				className={`h-full w-full transition-colors 
+				${active ? 'bg-neutral-800/50' : 'bg-neutral-800/0'}`}
 			>
 				{filteredCards.map(c => {
 					return <Card key={c.id} {...c} />
 				})}
 				<DropIndicator beforeId='-1' column={column} />
+				<AddCard column={column} setCards={setCards} />
 			</div>
 		</div>
 	)
@@ -119,20 +121,106 @@ const BurnBarrel = ({ setCards }) => {
 	)
 }
 
+const AddCard = ({ column, setCards }) => {
+	const [text, setText] = useState('')
+	const [adding, setAdding] = useState(false)
+
+	const handleSubmit = e => {
+		e.preventDefault()
+
+		if (!text.trim().length) return
+
+		const newCard = {
+			column,
+			title: text.trim(),
+			id: Math.random().toString(),
+		}
+
+		setCards(pv => [...pv, newCard])
+
+		setAdding(false)
+	}
+
+	return (
+		<>
+			{adding ? (
+				<form onSubmit={handleSubmit}>
+					<textarea
+						onChange={e => setText(e.target.value)}
+						autoFocus
+						placeholder='Add new task'
+						className='w-full rounded border border-violet-400 bg-violet-400/20 p-3
+						text-sm text-neutral-50 placeholder-violet-300 focus:outline-0'
+					/>
+					<div className='mt-1.5 flex items-center justify-end gap-1.5'>
+						<button
+							onClick={() => setAdding(false)}
+							className='px-3 py-1.5 text-xs text-neutral-400 transition-colors hover:text-neutral-50'
+						>
+							Close
+						</button>
+						<button
+							type='submit'
+							className='flex items-center gap-1.5 rounded bg-neutral-50 px-3 py-1.5 
+										text-xs text-neutral-950 transition-colors hover:bg-neutral-300'
+						>
+							<span>Add</span>
+							<FiPlus />
+						</button>
+					</div>
+				</form>
+			) : (
+				<button
+					onClick={() => setAdding(true)}
+					className='flex w-full items-center gap-1.5 px-3 py-1.5 text-xs
+					text-neutral-400 transition-colors hover:text-neutral-50'
+				>
+					<span>Add card</span>
+					<FiPlus />
+				</button>
+			)}
+		</>
+	)
+}
+
 const DEFAULT_CARDS = [
 	// BACKLOG
-	{ title: 'Look into render bug in dashboard', id: '1', column: 'backlog' },
-	{ title: 'SOX compliance checklist', id: '2', column: 'backlog' },
-	{ title: '[SPIKE] Migrate to Azure', id: '3', column: 'backlog' },
-	{ title: 'Document Notifications service', id: '4', column: 'backlog' },
+	{
+		title: 'Improve accessibility features on website',
+		id: '1',
+		column: 'backlog',
+	},
+	{
+		title: 'Implement new payment gateway integration',
+		id: '2',
+		column: 'backlog',
+	},
+	{
+		title: 'Optimize database queries for faster performance',
+		id: '3',
+		column: 'backlog',
+	},
+	{
+		title: 'Design user-friendly onboarding process',
+		id: '4',
+		column: 'backlog',
+	},
 	// TODO
 	{
-		title: 'Research DB options for new microservice',
+		title: 'Evaluate cloud providers for scalability',
 		id: '5',
 		column: 'todo',
 	},
-	{ title: 'Postmortem for outage', id: '6', column: 'todo' },
-	{ title: 'Sync with product on Q3 roadmap', id: '7', column: 'todo' },
+	{
+		title: 'Implement CI/CD pipeline for new service',
+		id: '6',
+		column: 'todo',
+	},
+	{
+		title: 'Conduct security audit for infrastructure',
+		id: '7',
+		column: 'todo',
+	},
 
 	// DOING
 	{
@@ -140,10 +228,15 @@ const DEFAULT_CARDS = [
 		id: '8',
 		column: 'doing',
 	},
-	{ title: 'Add logging to daily CRON', id: '9', column: 'doing' },
+	{
+		title:
+			'Implement state management using Zustand in existing Context Providers"',
+		id: '9',
+		column: 'doing',
+	},
 	// DONE
 	{
-		title: 'Set up DD dashboards for Lambda listener',
+		title: 'Set up DD dashboards',
 		id: '10',
 		column: 'done',
 	},
